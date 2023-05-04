@@ -29,7 +29,7 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        ''
+        'postgresql://postgres:MHzA8fM%7tr3dc5E^T2fKKsp@localhost/team3db'
 
 
 class TestingConfig(Config):

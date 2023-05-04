@@ -30,7 +30,7 @@ def unconfirmed():
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
-    if form.validate_on_submit():
+    if form.is_submitted() and form.validate():
         user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is not None and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
@@ -53,7 +53,7 @@ def logout():
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
-    if form.validate_on_submit():
+    if form.is_submitted() and form.validate():
         user = User(email=form.email.data.lower(),
                     username=form.username.data,
                     password=form.password.data)
@@ -94,7 +94,7 @@ def resend_confirmation():
 @login_required
 def change_password():
     form = ChangePasswordForm()
-    if form.validate_on_submit():
+    if form.is_submitted() and form.validate():
         if current_user.verify_password(form.old_password.data):
             current_user.password = form.password.data
             db.session.add(current_user)
@@ -111,7 +111,7 @@ def password_reset_request():
     if not current_user.is_anonymous:
         return redirect(url_for('main.index'))
     form = PasswordResetRequestForm()
-    if form.validate_on_submit():
+    if form.is_submitted() and form.validate():
         user = User.query.filter_by(email=form.email.data.lower()).first()
         if user:
             token = user.generate_reset_token()
@@ -129,7 +129,7 @@ def password_reset(token):
     if not current_user.is_anonymous:
         return redirect(url_for('main.index'))
     form = PasswordResetForm()
-    if form.validate_on_submit():
+    if form.is_submitted() and form.validate():
         if User.reset_password(token, form.password.data):
             db.session.commit()
             flash('Your password has been updated.')
@@ -143,7 +143,7 @@ def password_reset(token):
 @login_required
 def change_email_request():
     form = ChangeEmailForm()
-    if form.validate_on_submit():
+    if form.is_submitted() and form.validate():
         if current_user.verify_password(form.password.data):
             new_email = form.email.data.lower()
             token = current_user.generate_email_change_token(new_email)
