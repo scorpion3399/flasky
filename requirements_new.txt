@@ -8,9 +8,10 @@ dominate==2.7.0
 email-validator==2.0.0.post2
 Flask==2.3.2
 Flask-Bootstrap==3.3.7.1
+Flask-Ext==0.1
 Flask-Login==0.6.2
 Flask-Mail==0.9.1
-Flask-Migrate==4.0.4
+Flask-Migrate==2.7.0
 Flask-Moment==1.0.5
 Flask-Script==2.0.6
 Flask-SQLAlchemy==3.0.3
