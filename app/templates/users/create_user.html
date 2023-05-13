@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Create User</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100%;
+
+            background: url('/static/background.jpg')no-repeat;
+            background-position: center;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+        }
+
+        .alert {
+            position: relative;
+            padding: 1rem 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: .25rem
+        }
+
+        .alert-danger {
+            color: #842029;
+            background-color: #f8d7da;
+            border-color: #f5c2c7
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Create User</h1>
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{category}}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <form method="post" action="{{ url_for('ui.create_user') }}">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" placeholder="Enter username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" placeholder="Enter password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="role">Role:</label>
+                <select name="role" id="role">
+                    <option value="user">User</option>
+                    {% if current_user.is_authenticated and current_user.role == 'admin'%}
+                    <option value="admin">Admin</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="button-group">
+                <button type="submit">Register</button>
+                <a href="{{ url_for('auth.login') }}" class="button">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

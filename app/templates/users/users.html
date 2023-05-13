@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>User List</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css">
+
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      width: 100%;
+
+      background: url('/static/users.jpg')no-repeat;
+      background-position: center;
+      background-size: cover;
+      font-family: Arial, sans-serif;
+
+    }
+
+    .container {
+      margin: 0 auto;
+      width: 80%;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      color: rgb(34, 1, 1);
+      margin-top: 20px;
+    }
+
+    th,
+    td {
+      text-align: center;
+      padding: 12px;
+    }
+
+    th {
+      background-color: #4c28af;
+      width: max-content;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    tr:hover {
+      background-color: #ddd;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 38px;
+      color: #4CAF50;
+    }
+
+    a {
+      color: #4CAF50;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>User List</h1>
+    <div class="header">
+      <a href="{{ url_for('ui.uploadpage') }}" class="btn btn-primary">UploadFile</a>
+      {% if current_user.is_authenticated and current_user.role == 'admin'%}
+      <a href="{{ url_for('ui.create_user') }}" class="btn btn-primary">Create User</a>
+      {% endif %}
+      <a href="{{ url_for('auth.home') }}" class="btn btn-primary">Main</a>
+      <div class="flash-messages">
+        <div class="flash">
+          {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+          {% for category, message in messages %}
+          <div class="alert alert-{{category}}" role="alert">
+            {{ message }}
+          </div>
+          {% endfor %}
+          {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Role</th>
+        {% if current_user.is_authenticated and current_user.role == 'admin' %}
+        <th>Actions</th>
+        {% endif %}
+      </tr>
+      {% for user in users %}
+      <tr>
+        <td>{{ user[0] }}</td>
+        <td>{{ user[1] }}</td>
+        <td>{{ user[3] }}</td>
+        {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.id != user[0]%}
+        <td>
+          <button onclick="confirmDelete('{{ user[0] }}')" type="submit" class="btn btn-danger">Delete</button>
+          <script>
+            function confirmDelete(userId) {
+              if (confirm("Are you sure you want to delete this user?")) {
+                console.log("Deleting user with ID", userId);
+                // If the user confirms the action, send a DELETE request to the server
+                fetch(`/users/delete/${userId}`, {
+                  method: "POST",
+                })
+                  .then(response => response.json())
+                  .then(data => {
+                    console.log("Response from server:", data);
+                    alert(data.message); // Display a message to the user
+                    window.location.reload(); // Reload the page to reflect the updated user list
+                  })
+                  .catch(error => console.error(error));
+              }
+            }
+          </script>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</body>
+
+</html>
