@@ -44,3 +44,6 @@ venv
 # Environment files
 .env
 .env-mysql
+
+# Profiler
+profiler/

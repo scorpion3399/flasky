@@ -9,7 +9,6 @@ from flask_login import UserMixin, AnonymousUserMixin
 from app.exceptions import ValidationError
 from . import db, login_manager
 
-
 class Permission:
     FOLLOW = 1
     COMMENT = 2
@@ -138,16 +137,16 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def generate_confirmation_token(self, expiration=3600):
-        reset_token = jwt.encode(
+        conf_token = jwt.encode(
             {
-                "confirm": self.id,
-                "exp": datetime.datetime.now(tz=datetime.timezone.utc)
-                       + datetime.timedelta(seconds=expiration)
+                'confirm': self.id,
+                'exp': datetime.datetime.now(tz=datetime.timezone.utc)
+                    + datetime.timedelta(seconds=expiration)
             },
             current_app.config['SECRET_KEY'],
-            algorithm="HS256"
+            algorithm='HS256'
         )
-        return reset_token
+        return conf_token
 
     def confirm(self, token):
         try:
@@ -155,7 +154,7 @@ class User(UserMixin, db.Model):
                 token,
                 current_app.config['SECRET_KEY'],
                 leeway=datetime.timedelta(seconds=10),
-                algorithms=["HS256"]
+                algorithms=['HS256']
             )
         except:
             return False
@@ -166,14 +165,26 @@ class User(UserMixin, db.Model):
         return True
 
     def generate_reset_token(self, expiration=3600):
-        s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'reset': self.id}).decode('utf-8')
+        reset_token = jwt.encode(
+            {
+                'reset': self.id,
+                'exp': datetime.datetime.now(tz=datetime.timezone.utc)
+                    + datetime.timedelta(seconds=expiration)
+            },
+            current_app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+        return reset_token
 
     @staticmethod
     def reset_password(token, new_password):
-        s = Serializer(current_app.config['SECRET_KEY'])
         try:
-            data = s.loads(token.encode('utf-8'))
+            data = jwt.decode(
+                token,
+                current_app.config['SECRET_KEY'],
+                leeway=datetime.timedelta(seconds=10),
+                algorithms=["HS256"]
+            )
         except:
             return False
         user = User.query.get(data.get('reset'))
@@ -184,14 +195,26 @@ class User(UserMixin, db.Model):
         return True
 
     def generate_email_change_token(self, new_email, expiration=3600):
-        s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps(
-            {'change_email': self.id, 'new_email': new_email}).decode('utf-8')
+        email_change_token = jwt.encode(
+            {
+                'change_email': self.id,
+                'new_email': new_email,
+                'exp': datetime.datetime.now(tz=datetime.timezone.utc)
+                    + datetime.timedelta(seconds=expiration)
+            },
+            current_app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+        return email_change_token
 
     def change_email(self, token):
-        s = Serializer(current_app.config['SECRET_KEY'])
         try:
-            data = s.loads(token.encode('utf-8'))
+            data = jwt.decode(
+                token,
+                current_app.config['SECRET_KEY'],
+                leeway=datetime.timedelta(seconds=10),
+                algorithms=["HS256"]
+            )
         except:
             return False
         if data.get('change_email') != self.id:
@@ -266,15 +289,26 @@ class User(UserMixin, db.Model):
         return json_user
 
     def generate_auth_token(self, expiration):
-        s = Serializer(current_app.config['SECRET_KEY'],
-                       expires_in=expiration)
-        return s.dumps({'id': self.id}).decode('utf-8')
+        auth_token = jwt.encode(
+            {
+                'id': self.id,
+                'exp': datetime.datetime.now(tz=datetime.timezone.utc)
+                       + datetime.timedelta(seconds=expiration)
+            },
+            current_app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+        return auth_token
 
     @staticmethod
     def verify_auth_token(token):
-        s = Serializer(current_app.config['SECRET_KEY'])
         try:
-            data = s.loads(token)
+            data = jwt.decode(
+                token,
+                current_app.config['SECRET_KEY'],
+                leeway=datetime.timedelta(seconds=10),
+                algorithms=['HS256']
+            )
         except:
             return None
         return User.query.get(data['id'])

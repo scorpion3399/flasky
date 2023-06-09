@@ -58,7 +58,7 @@ class UserModelTestCase(unittest.TestCase):
         db.session.add(u)
         db.session.commit()
         token = u.generate_confirmation_token(1)
-        time.sleep(2)
+        time.sleep(13)
         self.assertFalse(u.confirm(token))
 
     def test_valid_reset_token(self):
@@ -192,6 +192,7 @@ class UserModelTestCase(unittest.TestCase):
         self.assertTrue(f.followed == u2)
         self.assertTrue(timestamp_before <= f.timestamp <= timestamp_after)
         f = u2.followers.all()[-1]
+        print(f)
         self.assertTrue(f.follower == u1)
         u1.unfollow(u2)
         db.session.add(u1)
