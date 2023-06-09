@@ -75,23 +75,10 @@ def change_username_request():
     form = ChangeUsernameForm()
     if form.is_submitted() and form.validate():
         if current_user.verify_password(form.password.data):
-            new_username = form.username.data.lower()
-            token = current_user.generate_username_change_token(new_username)
-            send_email(new_username, 'Confirm your email address',
-                       'auth/email/change_email',
-                       user=current_user, token=token)
-            return redirect(url_for('main.index'))
+            current_user.username = form.username.data
+            db.session.add(current_user)
+            db.session.commit()
+            flash('Your username has been updated.')
         else:
             flash('Invalid username or password.')
     return render_template("auth/change_username.html", form=form)
-
-
-@auth.route('/change_username/<token>')
-@login_required
-def change_email(token):
-    if current_user.change_email(token):
-        db.session.commit()
-        flash('Your username has been updated.')
-    else:
-        flash('Invalid request.')
-    return redirect(url_for('main.index'))

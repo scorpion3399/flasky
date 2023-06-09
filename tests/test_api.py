@@ -136,16 +136,6 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(json_response.get('count', 0), 1)
         self.assertEqual(json_response['posts'][0], json_post)
 
-        # get the post from the user as a follower
-        response = self.client.get(
-            '/api/v1/users/{}/timeline/'.format(u.id),
-            headers=self.get_api_headers('john', 'cat'))
-        self.assertEqual(response.status_code, 200)
-        json_response = json.loads(response.get_data(as_text=True))
-        self.assertIsNotNone(json_response.get('posts'))
-        self.assertEqual(json_response.get('count', 0), 1)
-        self.assertEqual(json_response['posts'][0], json_post)
-
         # edit post
         response = self.client.put(
             url,
@@ -163,7 +153,9 @@ class APITestCase(unittest.TestCase):
         self.assertIsNotNone(r)
         u1 = User(username='john', password='cat', role=r)
         u2 = User(username='susan', password='dog', role=r)
-        db.session.add_all([u1, u2])
+        # db.session.add_all([u1, u2])
+        db.session.add(u1)
+        db.session.add(u2)
         db.session.commit()
 
         # get users

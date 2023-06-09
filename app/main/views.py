@@ -34,7 +34,7 @@ def server_shutdown():
 @main.route('/', methods=['GET', 'POST'])
 def index():
     form = PostForm()
-    if current_user.can(Permission.ADMIN) and form.validate_on_submit():
+    if current_user.can(Permission.WRITE) and form.validate_on_submit():
         post = Post(body=form.body.data,
                     author=current_user._get_current_object())
         db.session.add(post)
@@ -87,7 +87,6 @@ def edit_profile_admin(id):
     form = EditProfileAdminForm(user=user)
     if form.validate_on_submit():
         user.username = form.username.data
-        user.confirmed = form.confirmed.data
         user.role = Role.query.get(form.role.data)
         user.name = form.name.data
         user.location = form.location.data
@@ -97,7 +96,6 @@ def edit_profile_admin(id):
         flash('The profile has been updated.')
         return redirect(url_for('.user', username=user.username))
     form.username.data = user.username
-    form.confirmed.data = user.confirmed
     form.role.data = user.role_id
     form.name.data = user.name
     form.location.data = user.location
@@ -116,7 +114,7 @@ def post(id):
 def edit(id):
     post = Post.query.get_or_404(id)
     if current_user != post.author and \
-            not current_user.can(Permission.ADMIN):
+            not current_user.can(Permission.WRITE):
         abort(403)
     form = PostForm()
     if form.validate_on_submit():
