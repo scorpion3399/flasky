@@ -2,7 +2,7 @@ import unittest
 import time
 from datetime import datetime
 from app import create_app, db
-from app.models import User, AnonymousUser, Role, Permission, Follow
+from app.models import User, AnonymousUser, Role, Permission
 
 
 class UserModelTestCase(unittest.TestCase):
@@ -37,38 +37,6 @@ class UserModelTestCase(unittest.TestCase):
         u2 = User(password='cat')
         self.assertTrue(u.password_hash != u2.password_hash)
 
-    def test_valid_confirmation_token(self):
-        u = User(password='cat')
-        db.session.add(u)
-        db.session.commit()
-        token = u.generate_confirmation_token()
-        self.assertTrue(u.confirm(token))
-
-    def test_invalid_confirmation_token(self):
-        u1 = User(password='cat')
-        u2 = User(password='dog')
-        db.session.add(u1)
-        db.session.add(u2)
-        db.session.commit()
-        token = u1.generate_confirmation_token()
-        self.assertFalse(u2.confirm(token))
-
-    def test_expired_confirmation_token(self):
-        u = User(password='cat')
-        db.session.add(u)
-        db.session.commit()
-        token = u.generate_confirmation_token(1)
-        time.sleep(13)
-        self.assertFalse(u.confirm(token))
-
-    def test_valid_reset_token(self):
-        u = User(password='cat')
-        db.session.add(u)
-        db.session.commit()
-        token = u.generate_reset_token()
-        self.assertTrue(User.reset_password(token, 'dog'))
-        self.assertTrue(u.verify_password('dog'))
-
     def test_invalid_reset_token(self):
         u = User(password='cat')
         db.session.add(u)
@@ -77,66 +45,45 @@ class UserModelTestCase(unittest.TestCase):
         self.assertFalse(User.reset_password(token + 'a', 'horse'))
         self.assertTrue(u.verify_password('cat'))
 
-    def test_valid_email_change_token(self):
-        u = User(email='john@example.com', password='cat')
+    def test_valid_username_change_token(self):
+        u = User(username='john', password='cat')
         db.session.add(u)
         db.session.commit()
-        token = u.generate_email_change_token('susan@example.org')
-        self.assertTrue(u.change_email(token))
-        self.assertTrue(u.email == 'susan@example.org')
+        token = u.generate_username_change_token('susan')
+        self.assertTrue(u.change_username(token))
+        self.assertTrue(u.username == 'susan')
 
-    def test_invalid_email_change_token(self):
-        u1 = User(email='john@example.com', password='cat')
-        u2 = User(email='susan@example.org', password='dog')
+    def test_invalid_username_change_token(self):
+        u1 = User(username='john', password='cat')
+        u2 = User(username='susan', password='dog')
         db.session.add(u1)
         db.session.add(u2)
         db.session.commit()
-        token = u1.generate_email_change_token('david@example.net')
-        self.assertFalse(u2.change_email(token))
-        self.assertTrue(u2.email == 'susan@example.org')
+        token = u1.generate_username_change_token('david')
+        self.assertFalse(u2.change_username(token))
+        self.assertTrue(u2.username == 'susan')
 
-    def test_duplicate_email_change_token(self):
-        u1 = User(email='john@example.com', password='cat')
-        u2 = User(email='susan@example.org', password='dog')
+    def test_duplicate_username_change_token(self):
+        u1 = User(username='john', password='cat')
+        u2 = User(username='susan', password='dog')
         db.session.add(u1)
         db.session.add(u2)
         db.session.commit()
-        token = u2.generate_email_change_token('john@example.com')
-        self.assertFalse(u2.change_email(token))
-        self.assertTrue(u2.email == 'susan@example.org')
+        token = u2.generate_username_change_token('john')
+        self.assertFalse(u2.change_username(token))
+        self.assertTrue(u2.username == 'susan')
 
     def test_user_role(self):
-        u = User(email='john@example.com', password='cat')
-        self.assertTrue(u.can(Permission.FOLLOW))
-        self.assertTrue(u.can(Permission.COMMENT))
-        self.assertTrue(u.can(Permission.WRITE))
-        self.assertFalse(u.can(Permission.MODERATE))
-        self.assertFalse(u.can(Permission.ADMIN))
-
-    def test_moderator_role(self):
-        r = Role.query.filter_by(name='Moderator').first()
-        u = User(email='john@example.com', password='cat', role=r)
-        self.assertTrue(u.can(Permission.FOLLOW))
-        self.assertTrue(u.can(Permission.COMMENT))
-        self.assertTrue(u.can(Permission.WRITE))
-        self.assertTrue(u.can(Permission.MODERATE))
+        u = User(username='john', password='cat')
         self.assertFalse(u.can(Permission.ADMIN))
 
     def test_administrator_role(self):
         r = Role.query.filter_by(name='Administrator').first()
-        u = User(email='john@example.com', password='cat', role=r)
-        self.assertTrue(u.can(Permission.FOLLOW))
-        self.assertTrue(u.can(Permission.COMMENT))
-        self.assertTrue(u.can(Permission.WRITE))
-        self.assertTrue(u.can(Permission.MODERATE))
+        u = User(username='john', password='cat', role=r)
         self.assertTrue(u.can(Permission.ADMIN))
 
     def test_anonymous_user(self):
         u = AnonymousUser()
-        self.assertFalse(u.can(Permission.FOLLOW))
-        self.assertFalse(u.can(Permission.COMMENT))
-        self.assertFalse(u.can(Permission.WRITE))
-        self.assertFalse(u.can(Permission.MODERATE))
         self.assertFalse(u.can(Permission.ADMIN))
 
     def test_timestamps(self):
@@ -158,7 +105,7 @@ class UserModelTestCase(unittest.TestCase):
         self.assertTrue(u.last_seen > last_seen_before)
 
     def test_gravatar(self):
-        u = User(email='john@example.com', password='cat')
+        u = User(username='john', password='cat')
         with self.app.test_request_context('/'):
             gravatar = u.gravatar()
             gravatar_256 = u.gravatar(size=256)
@@ -170,51 +117,13 @@ class UserModelTestCase(unittest.TestCase):
         self.assertTrue('r=pg' in gravatar_pg)
         self.assertTrue('d=retro' in gravatar_retro)
 
-    def test_follows(self):
-        u1 = User(email='john@example.com', password='cat')
-        u2 = User(email='susan@example.org', password='dog')
-        db.session.add(u1)
-        db.session.add(u2)
-        db.session.commit()
-        self.assertFalse(u1.is_following(u2))
-        self.assertFalse(u1.is_followed_by(u2))
-        timestamp_before = datetime.utcnow()
-        u1.follow(u2)
-        db.session.add(u1)
-        db.session.commit()
-        timestamp_after = datetime.utcnow()
-        self.assertTrue(u1.is_following(u2))
-        self.assertFalse(u1.is_followed_by(u2))
-        self.assertTrue(u2.is_followed_by(u1))
-        self.assertTrue(u1.followed.count() == 2)
-        self.assertTrue(u2.followers.count() == 2)
-        f = u1.followed.all()[-1]
-        self.assertTrue(f.followed == u2)
-        self.assertTrue(timestamp_before <= f.timestamp <= timestamp_after)
-        f = u2.followers.all()[-1]
-        print(f)
-        self.assertTrue(f.follower == u1)
-        u1.unfollow(u2)
-        db.session.add(u1)
-        db.session.commit()
-        self.assertTrue(u1.followed.count() == 1)
-        self.assertTrue(u2.followers.count() == 1)
-        self.assertTrue(Follow.query.count() == 2)
-        u2.follow(u1)
-        db.session.add(u1)
-        db.session.add(u2)
-        db.session.commit()
-        db.session.delete(u2)
-        db.session.commit()
-        self.assertTrue(Follow.query.count() == 1)
-
     def test_to_json(self):
-        u = User(email='john@example.com', password='cat')
+        u = User(username='john', password='cat')
         db.session.add(u)
         db.session.commit()
         with self.app.test_request_context('/'):
             json_user = u.to_json()
         expected_keys = ['url', 'username', 'member_since', 'last_seen',
-                         'posts_url', 'followed_posts_url', 'post_count']
+                         'posts_url', 'post_count']
         self.assertEqual(sorted(json_user.keys()), sorted(expected_keys))
         self.assertEqual('/api/v1/users/' + str(u.id), json_user['url'])

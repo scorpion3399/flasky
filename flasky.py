@@ -16,7 +16,7 @@ import click
 from flask_migrate import Migrate, upgrade, MigrateCommand
 from flask_script import Manager, Shell, Command, Option
 from app import create_app, db
-from app.models import User, Follow, Role, Permission, Post, Comment
+from app.models import User, Role, Permission, Post
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 migrate = Migrate(app, db)
@@ -24,8 +24,7 @@ manager = Manager(app)
 
 @app.shell_context_processor
 def make_shell_context():
-    return dict(db=db, User=User, Follow=Follow, Role=Role,
-                Permission=Permission, Post=Post, Comment=Comment)
+    return dict(db=db, User=User, Role=Role, Permission=Permission, Post=Post)
 
 class Test(Command):
     option_list = (
@@ -83,9 +82,6 @@ class Deploy(Command):
 
         # create or update user roles
         Role.insert_roles()
-
-        # ensure all users are following themselves
-        User.add_self_follows()
 
 
 manager.add_command('db', MigrateCommand)
