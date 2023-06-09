@@ -131,6 +131,5 @@ def edit(id):
 @login_required
 def show_all():
     resp = make_response(redirect(url_for('.index')))
-    resp.set_cookie('show_followed', '', max_age=30*24*60*60)
     return resp
 

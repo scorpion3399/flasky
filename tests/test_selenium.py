@@ -9,7 +9,7 @@ from app.models import Role, User, Post
 
 class SeleniumTestCase(unittest.TestCase):
     client = None
-    
+
     @classmethod
     def setUpClass(cls):
         # start Chrome
@@ -40,9 +40,7 @@ class SeleniumTestCase(unittest.TestCase):
 
             # add an administrator user
             admin_role = Role.query.filter_by(name='Administrator').first()
-            admin = User(email='john@example.com',
-                         username='john', password='cat',
-                         role=admin_role, confirmed=True)
+            admin = User(username='john', password='cat', role=admin_role)
             db.session.add(admin)
             db.session.commit()
 
@@ -75,7 +73,7 @@ class SeleniumTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
-    
+
     def test_admin_home_page(self):
         # navigate to home page
         self.client.get('http://localhost:5000/')
@@ -87,8 +85,8 @@ class SeleniumTestCase(unittest.TestCase):
         self.assertIn('<h1>Login</h1>', self.client.page_source)
 
         # login
-        self.client.find_element_by_name('email').\
-            send_keys('john@example.com')
+        self.client.find_element_by_name('username').\
+            send_keys('john')
         self.client.find_element_by_name('password').send_keys('cat')
         self.client.find_element_by_name('submit').click()
         self.assertTrue(re.search('Hello,\s+john!', self.client.page_source))

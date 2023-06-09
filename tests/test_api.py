@@ -55,6 +55,7 @@ class APITestCase(unittest.TestCase):
             headers=self.get_api_headers('john', 'dog'))
         self.assertEqual(response.status_code, 401)
 
+    # fails
     def test_token_auth(self):
         # add a user
         r = Role.query.filter_by(name='User').first()
@@ -90,6 +91,7 @@ class APITestCase(unittest.TestCase):
             headers=self.get_api_headers('', ''))
         self.assertEqual(response.status_code, 401)
 
+    # fails
     def test_posts(self):
         # add a user
         r = Role.query.filter_by(name='User').first()
@@ -147,15 +149,14 @@ class APITestCase(unittest.TestCase):
         self.assertEqual(json_response['body'], 'updated body')
         self.assertEqual(json_response['body_html'], '<p>updated body</p>')
 
+    # fails
     def test_users(self):
         # add two users
         r = Role.query.filter_by(name='User').first()
         self.assertIsNotNone(r)
         u1 = User(username='john', password='cat', role=r)
         u2 = User(username='susan', password='dog', role=r)
-        # db.session.add_all([u1, u2])
-        db.session.add(u1)
-        db.session.add(u2)
+        db.session.add_all([u1, u2])
         db.session.commit()
 
         # get users
